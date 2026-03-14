@@ -48,6 +48,9 @@ const (
 	RouteItem           = RouteCollection + "/{id}"
 	RouteCredentialItem = RouteItem + "/credentials/{type}"
 
+	RouteWebAuthnRegistrationOptions  = RouteItem + "/webauthn/registration-options"
+	RouteWebAuthnRegistrationComplete = RouteItem + "/webauthn/registration-complete"
+
 	BatchPatchIdentitiesLimit             = 1000
 	BatchPatchIdentitiesWithPasswordLimit = 200
 )
@@ -76,9 +79,11 @@ func (h *Handler) RegisterPublicRoutes(public *httprouterx.RouterPublic) {
 		RouteCollection,
 		RouteCollection+"/*",
 		RouteCollection+"/*/credentials/*",
+		RouteCollection+"/*/webauthn/*",
 		httprouterx.AdminPrefix+RouteCollection,
 		httprouterx.AdminPrefix+RouteCollection+"/*",
 		httprouterx.AdminPrefix+RouteCollection+"/*/credentials/*",
+		httprouterx.AdminPrefix+RouteCollection+"/*/webauthn/*",
 	)
 
 	public.GET(RouteCollection, redir.RedirectToAdminRoute(h.r))
@@ -112,6 +117,9 @@ func (h *Handler) RegisterAdminRoutes(admin *httprouterx.RouterAdmin) {
 	admin.PUT(RouteItem, h.update)
 
 	admin.DELETE(RouteCredentialItem, h.deleteIdentityCredentials)
+
+	admin.POST(RouteWebAuthnRegistrationOptions, h.createWebAuthnRegistrationOptions)
+	admin.POST(RouteWebAuthnRegistrationComplete, h.completeWebAuthnRegistration)
 }
 
 // Paginated Identity List Response
@@ -543,8 +551,11 @@ type IdentityWithCredentials struct {
 	// OIDC if set will import an OIDC credential.
 	OIDC *AdminIdentityImportCredentialsOIDC `json:"oidc"`
 
-	// OIDC if set will import an OIDC credential.
+	// SAML if set will import a SAML credential.
 	SAML *AdminIdentityImportCredentialsSAML `json:"saml"`
+
+	// WebAuthn if set will import a WebAuthn/Passkey credential.
+	WebAuthn *AdminIdentityImportCredentialsWebAuthn `json:"webauthn"`
 }
 
 // Create Identity and Import Password Credentials
@@ -638,6 +649,28 @@ type AdminCreateIdentityImportCredentialsSAMLProvider struct {
 
 	// The organization to assign for the provider.
 	Organization uuid.NullUUID `json:"organization"`
+}
+
+// Create Identity and Import WebAuthn/Passkey Credentials
+//
+// swagger:model identityWithCredentialsWebAuthn
+type AdminIdentityImportCredentialsWebAuthn struct {
+	// Configuration options for the import.
+	Config AdminIdentityImportCredentialsWebAuthnConfig `json:"config"`
+}
+
+// Create Identity and Import WebAuthn/Passkey Credentials Configuration
+//
+// swagger:model identityWithCredentialsWebAuthnConfig
+type AdminIdentityImportCredentialsWebAuthnConfig struct {
+	// The credential in Kratos WebAuthn format. Contains credential ID, public key, flags, etc.
+	//
+	// required: true
+	Credentials []CredentialWebAuthn `json:"credentials"`
+
+	// The user handle for this identity's WebAuthn credentials.
+	// If empty, a random user handle will be generated.
+	UserHandle []byte `json:"user_handle,omitempty"`
 }
 
 // swagger:route POST /admin/identities identity createIdentity

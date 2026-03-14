@@ -45,6 +45,12 @@ func (h *Handler) importCredentials(ctx context.Context, i *Identity, creds *Ide
 		}
 	}
 
+	if creds.WebAuthn != nil {
+		if err := h.importWebAuthnCredentials(ctx, i, creds.WebAuthn); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -159,4 +165,24 @@ func (h *Handler) importSAMLCredentials(_ context.Context, i *Identity, creds *A
 		target.Providers = append(target.Providers, provider)
 	}
 	return i.SetCredentialsWithConfig(CredentialsTypeSAML, *c, &target)
+}
+
+func (h *Handler) importWebAuthnCredentials(_ context.Context, i *Identity, creds *AdminIdentityImportCredentialsWebAuthn) error {
+	if len(creds.Config.Credentials) == 0 {
+		return errors.WithStack(herodot.ErrBadRequest.WithReason("At least one WebAuthn credential must be provided"))
+	}
+
+	userHandle := creds.Config.UserHandle
+	if len(userHandle) == 0 {
+		userHandle = []byte(x.NewUUID().String())
+	}
+
+	conf := CredentialsWebAuthnConfig{
+		Credentials: creds.Config.Credentials,
+		UserHandle:  userHandle,
+	}
+
+	return i.SetCredentialsWithConfig(CredentialsTypePasskey, Credentials{
+		Identifiers: []string{string(userHandle)},
+	}, conf)
 }
