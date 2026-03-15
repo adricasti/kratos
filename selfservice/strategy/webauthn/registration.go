@@ -208,7 +208,13 @@ func (s *Strategy) injectWebauthnRegistrationOptions(r *http.Request, f *registr
 
 	webauthID := x.NewUUID()
 	user := webauthnx.NewUser(webauthID[:], nil, s.d.Config().WebAuthnConfig(ctx))
-	option, sessionData, err := web.BeginRegistration(user)
+	option, sessionData, err := web.BeginRegistration(
+		user,
+		webauthn.WithCredentialParameters([]protocol.CredentialParameter{
+			{Type: protocol.PublicKeyCredentialType, Algorithm: -7},
+			{Type: protocol.PublicKeyCredentialType, Algorithm: -257},
+		}),
+	)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

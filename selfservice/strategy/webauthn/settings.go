@@ -372,7 +372,13 @@ func (s *Strategy) PopulateSettingsMethod(ctx context.Context, r *http.Request, 
 		return errors.WithStack(err)
 	}
 
-	option, sessionData, err := web.BeginRegistration(webauthnx.NewUser(id.ID.Bytes(), nil, web.Config))
+	option, sessionData, err := web.BeginRegistration(
+		webauthnx.NewUser(id.ID.Bytes(), nil, web.Config),
+		webauthn.WithCredentialParameters([]protocol.CredentialParameter{
+			{Type: protocol.PublicKeyCredentialType, Algorithm: -7},
+			{Type: protocol.PublicKeyCredentialType, Algorithm: -257},
+		}),
+	)
 	if err != nil {
 		return errors.WithStack(err)
 	}

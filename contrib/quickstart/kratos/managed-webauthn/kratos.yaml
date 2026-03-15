@@ -30,16 +30,6 @@ selfservice:
           origins:
             - http://localhost:4433
             - http://localhost:4455
-    webauthn:
-      enabled: true
-      config:
-        passwordless: true
-        rp:
-          display_name: Ory Corp
-          id: localhost
-          origins:
-            - http://localhost:4433
-            - http://localhost:4455
 
   flows:
     error:
