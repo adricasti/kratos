@@ -363,6 +363,15 @@ func (s *Strategy) continueSettingsFlowAdd(ctx context.Context, ctxUpdate *setti
 	}
 
 	credentialWebAuthn := identity.CredentialFromWebAuthn(credential, true)
+
+	// Propagate ParentID from active session for hierarchy tracking
+	for _, method := range ctxUpdate.Session.AMR {
+		if (method.Method == identity.CredentialsTypeWebAuthn || method.Method == identity.CredentialsTypePasskey) && len(method.CredentialID) > 0 {
+			credentialWebAuthn.ParentID = method.CredentialID
+			break
+		}
+	}
+
 	cc.UserHandle = webAuthnSess.UserID
 	cc.Credentials = append(cc.Credentials, *credentialWebAuthn)
 	credentialsConfig, err := json.Marshal(cc)
