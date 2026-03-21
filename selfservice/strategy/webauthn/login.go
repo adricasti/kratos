@@ -6,6 +6,7 @@ package webauthn
 import (
 	"context"
 	"encoding/json"
+	"encoding/hex"
 	"net/http"
 	"strings"
 	"time"
@@ -287,7 +288,8 @@ func (s *Strategy) loginAuthenticate(ctx context.Context, r *http.Request, f *lo
 		webAuthCreds = o.Credentials.ToWebAuthn()
 	}
 
-	if _, err := web.ValidateLogin(webauthnx.NewUser(o.UserHandle, webAuthCreds, web.Config), webAuthnSess, webAuthnResponse); err != nil {
+	credWebAuthn, err := web.ValidateLogin(webauthnx.NewUser(o.UserHandle, webAuthCreds, web.Config), webAuthnSess, webAuthnResponse)
+	if err != nil {
 		return nil, s.handleLoginError(r, f, errors.WithStack(schema.NewWebAuthnVerifierWrongError("#/")))
 	}
 
@@ -296,6 +298,12 @@ func (s *Strategy) loginAuthenticate(ctx context.Context, r *http.Request, f *lo
 	if err != nil {
 		return nil, s.handleLoginError(r, f, errors.WithStack(err))
 	}
+
+	ic, err := sjson.Set(string(f.InternalContext), flow.PrefixInternalContextKey(s.ID(), "used_credential_id_hex"), hex.EncodeToString(credWebAuthn.ID))
+	if err != nil {
+		return nil, s.handleLoginError(r, f, errors.WithStack(err))
+	}
+	f.InternalContext = []byte(ic)
 
 	f.Active = s.ID()
 	if err = s.d.LoginFlowPersister().UpdateLoginFlow(ctx, f); err != nil {

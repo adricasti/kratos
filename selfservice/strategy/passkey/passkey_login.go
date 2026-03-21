@@ -7,6 +7,7 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+	"encoding/hex"
 	"net/http"
 	"strings"
 
@@ -268,7 +269,7 @@ func (s *Strategy) loginAuthenticate(ctx context.Context, r *http.Request, f *lo
 	}
 
 	webAuthCreds := o.Credentials.PasswordlessOnly(&webAuthnResponse.Response.AuthenticatorData.Flags)
-	_, err = web.ValidateDiscoverableLogin(
+	credWebAuthn, err := web.ValidateDiscoverableLogin(
 		func(rawID, userHandle []byte) (user webauthn.User, err error) {
 			return webauthnx.NewUser(userHandle, webAuthCreds, web.Config), nil
 		}, webAuthnSess, webAuthnResponse)
@@ -281,6 +282,12 @@ func (s *Strategy) loginAuthenticate(ctx context.Context, r *http.Request, f *lo
 	if err != nil {
 		return nil, s.handleLoginError(r, f, x.WrapWithIdentityIDError(errors.WithStack(err), i.ID))
 	}
+
+	ic, err := sjson.Set(string(f.InternalContext), flow.PrefixInternalContextKey(s.ID(), "used_credential_id_hex"), hex.EncodeToString(credWebAuthn.ID))
+	if err != nil {
+		return nil, s.handleLoginError(r, f, x.WrapWithIdentityIDError(errors.WithStack(err), i.ID))
+	}
+	f.InternalContext = []byte(ic)
 
 	f.Active = s.ID()
 	if err = s.d.LoginFlowPersister().UpdateLoginFlow(ctx, f); err != nil {

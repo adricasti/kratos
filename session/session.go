@@ -173,6 +173,10 @@ func (s *Session) CompletedLoginFor(method identity.CredentialsType, aal identit
 	s.CompletedLoginForMethod(AuthenticationMethod{Method: method, AAL: aal})
 }
 
+func (s *Session) CompletedLoginForWithCredential(method identity.CredentialsType, aal identity.AuthenticatorAssuranceLevel, credentialID []byte) {
+	s.CompletedLoginForMethod(AuthenticationMethod{Method: method, AAL: aal, CredentialID: credentialID})
+}
+
 func (s *Session) CompletedLoginForWithProvider(method identity.CredentialsType, aal identity.AuthenticatorAssuranceLevel, providerID string, organizationID string) {
 	s.CompletedLoginForMethod(AuthenticationMethod{
 		Method:       method,
@@ -327,6 +331,9 @@ type AuthenticationMethod struct {
 
 	// The Organization id used for authentication
 	Organization string `json:"organization,omitempty"`
+
+	// The WebAuthn credential ID used for authentication
+	CredentialID []byte `json:"credential_id,omitempty"`
 }
 
 // Scan implements the Scanner interface.

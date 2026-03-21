@@ -4,12 +4,14 @@
 package login
 
 import (
+	"encoding/hex"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
+	"github.com/tidwall/gjson"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -943,6 +945,14 @@ continueLogin:
 		}
 
 		method := ss.CompletedAuthenticationMethod(ctx)
+		
+		usedCredHex := gjson.GetBytes(f.InternalContext, flow.PrefixInternalContextKey(ss.ID(), "used_credential_id_hex")).String()
+		if usedCredHex != "" {
+			if dec, err := hex.DecodeString(usedCredHex); err == nil {
+				method.CredentialID = dec
+			}
+		}
+
 		sess.CompletedLoginForMethod(method)
 		i = interim
 		ct = ss.ID()

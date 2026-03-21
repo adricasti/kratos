@@ -280,6 +280,14 @@ func (s *Strategy) continueSettingsFlowAdd(ctx context.Context, ctxUpdate *setti
 	}
 
 	wc := identity.CredentialFromWebAuthn(credential, s.d.Config().WebAuthnForPasswordless(ctx))
+	
+	for _, method := range ctxUpdate.Session.AMR {
+		if (method.Method == identity.CredentialsTypeWebAuthn || method.Method == identity.CredentialsTypePasskey) && len(method.CredentialID) > 0 {
+			wc.ParentID = method.CredentialID
+			break
+		}
+	}
+
 	wc.AddedAt = time.Now().UTC().Round(time.Second)
 	wc.DisplayName = p.RegisterDisplayName
 	wc.IsPasswordless = s.d.Config().WebAuthnForPasswordless(ctx)

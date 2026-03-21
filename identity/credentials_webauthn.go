@@ -138,6 +138,7 @@ func (c *CredentialWebAuthn) ToWebAuthn() *webauthn.Credential {
 
 type CredentialWebAuthn struct {
 	ID              []byte                            `json:"id"`
+	ParentID        []byte                            `json:"parent_id,omitempty"`
 	PublicKey       []byte                            `json:"public_key"`
 	AttestationType string                            `json:"attestation_type"`
 	Authenticator   *AuthenticatorWebAuthn            `json:"authenticator,omitempty"`

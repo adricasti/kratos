@@ -728,7 +728,7 @@ func (h *Handler) create(w http.ResponseWriter, r *http.Request) {
 			"identities",
 			i.ID.String(),
 		).String(),
-		WithCredentialsNoConfigAndAdminMetadataInJSON(*i),
+		WithCredentialsAndAdminMetadataInJSON(*i),
 	)
 }
 
@@ -1035,7 +1035,7 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.r.Writer().Write(w, r, WithCredentialsNoConfigAndAdminMetadataInJSON(*identity))
+	h.r.Writer().Write(w, r, WithCredentialsAndAdminMetadataInJSON(*identity))
 }
 
 // Delete Identity Parameters
@@ -1183,8 +1183,7 @@ func (h *Handler) patch(w http.ResponseWriter, r *http.Request) {
 		h.r.Writer().WriteError(w, r, err)
 		return
 	}
-
-	h.r.Writer().Write(w, r, WithCredentialsNoConfigAndAdminMetadataInJSON(updatedIdentity))
+	h.r.Writer().Write(w, r, WithCredentialsAndAdminMetadataInJSON(updatedIdentity))
 }
 
 // Delete Credential Parameters
